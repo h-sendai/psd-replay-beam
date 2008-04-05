@@ -12,6 +12,8 @@
 #define REQUEST_HEADER	0xa3
 
 extern int dflag;
+extern int sflag;
+extern int usleep_time;
 
 int str_echo(int sockfd, char *filename)
 {
@@ -90,6 +92,9 @@ int str_echo(int sockfd, char *filename)
 		iov[0].iov_len  = sizeof(length_return);
 		iov[1].iov_base = buf;
 		iov[1].iov_len  = n;
+		if (sflag) {
+			usleep(usleep_time);
+		}
 		if (writev(sockfd, &iov[0], 2) != n + sizeof(length_return)) {
 			err(1, "length + data write");
 		}

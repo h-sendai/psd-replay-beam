@@ -17,7 +17,10 @@
 #define LISTENQ			10
 #define SA				struct sockaddr
 
-int dflag = 0;
+int dflag       = 0;
+int sflag       = 0;
+int usleep_time = 0;
+
 extern int str_echo(int, char *);
 
 void sig_chld(int signo)
@@ -33,7 +36,7 @@ void sig_chld(int signo)
 
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-p port] file\n");
+	fprintf(stderr, "psd_replay [-d] [-p port] [-s usleep] file\n");
 	return;
 }
 
@@ -50,13 +53,17 @@ int main(int argc, char *argv[])
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "dp:")) != -1) {
+	while( (ch = getopt(argc, argv, "dp:s:")) != -1) {
 		switch(ch) {
 			case 'd':
 				dflag = 1;
 				break;
 			case 'p':
 				port = atoi(optarg);
+				break;
+			case 's':
+				sflag = 1;
+				usleep_time = atoi(optarg);
 				break;
 			case '?':
 			default:
