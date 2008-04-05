@@ -1,0 +1,7 @@
+syntax: glob
+psd_replay
+.depend
+*.o
+*.d
+*.dat
+*~
