@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <err.h>
@@ -24,6 +25,7 @@ int str_echo(int sockfd, char *filename)
 	int filefd;
 	int length_return;
 	int file_eof = 0;
+	struct iovec iov[2];
 
 	if ( (filefd = open(filename, O_RDONLY)) < 0) {
 		err(1, "open");
@@ -73,12 +75,13 @@ int str_echo(int sockfd, char *filename)
 			//	}
 			//}
 			length_return = htonl(length_return/2);
-			/* XXX: should use writev */
-			if (write(sockfd, &length_return, sizeof(length_return)) != sizeof(length_return)) {
-				err(1, "length return write");
-			}
-			if (write(sockfd, buf, n) != n) {
-				err(1, "data write");
+			iov[0].iov_base = &length_return;
+			iov[0].iov_len  = sizeof(length_return);
+			iov[1].iov_base = buf;
+			iov[1].iov_len  = n;
+
+			if (writev(sockfd, &iov[0], 2) != n + sizeof(length_return)) {
+				err(1, "length + data write");
 			}
 		}
 		else {
