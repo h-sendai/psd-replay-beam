@@ -1,21 +1,36 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
+#include "my_signal.h"
 
 #define SERV_PORT		23456
 #define LENGTH_REQUEST	8
 #define REQUEST_HEADER	0xa3
 #define LISTENQ			10
+#define SA				struct sockaddr
 
 static int dflag = 0;
+
+void sig_chld(int signo)
+{
+	pid_t	pid;
+	int		stat;
+
+	while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0) {
+		;
+	}
+	return;
+}
 
 int str_echo(int sockfd, char *filename)
 {
@@ -119,6 +134,7 @@ main(int argc, char **argv)
 	int					listenfd, connfd;
 	int					port;
 	int					on = 1;
+	pid_t				childpid;
 	socklen_t			clilen;
 	struct sockaddr_in	cliaddr, servaddr;
 
@@ -163,20 +179,38 @@ main(int argc, char **argv)
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port        = htons(port);
 
-	if (bind(listenfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+	if (bind(listenfd, (SA *) &servaddr, sizeof(servaddr)) < 0) {
 		err(1, "bind");
 	}
 
 	if (listen(listenfd, LISTENQ) < 0) {
 		err(1, "listen");
 	}
+	
+	my_signal(SIGCHLD, sig_chld);
 
 	for ( ; ; ) {
 		clilen = sizeof(cliaddr);
-		if ( (connfd = accept(listenfd, (struct sockaddr *) &cliaddr, &clilen)) < 0) {
-			err(1, "accept");
+		if ( (connfd = accept(listenfd, (SA *) &cliaddr, &clilen)) < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			else {
+				err(1, "accept");
+			}
 		}
-		str_echo(connfd, filename);
-		close(connfd);
+
+		if ( (childpid = fork()) < 0) {
+			err(1, "fork");
+		}
+
+		if (childpid == 0) { /* child */
+			close(listenfd);
+			str_echo(connfd, filename);
+			exit(0);
+		}
+		else { /* parent */
+			close(connfd);
+		}
 	}
 }
