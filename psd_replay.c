@@ -10,10 +10,10 @@
 #include <strings.h>
 #include <unistd.h>
 
-#define SERV_PORT 23456
-#define LENGTH_REQUEST 8
-#define REQUEST_HEADER 0xa3
-#define LISTENQ   10
+#define SERV_PORT		23456
+#define LENGTH_REQUEST	8
+#define REQUEST_HEADER	0xa3
+#define LISTENQ			10
 
 static int dflag = 0;
 
@@ -89,7 +89,7 @@ int str_echo(int sockfd, char *filename)
 			n = 0;
 		}
 
-		length_return = htonl(length_return/2);
+		length_return = htonl(length_return/2); /* return length in words */
 		iov[0].iov_base = &length_return;
 		iov[0].iov_len  = sizeof(length_return);
 		iov[1].iov_base = buf;
