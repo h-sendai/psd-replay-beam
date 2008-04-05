@@ -3,5 +3,4 @@ psd_replay
 .depend
 *.o
 *.d
-*.dat
 *~
