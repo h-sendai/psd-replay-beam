@@ -116,6 +116,9 @@ int str_echo(int sockfd, char *filename)
 	if (m < 0) { 
 		err(1, "recv length request");
 	}
+	if (dflag) { /* m == 0 */
+		fprintf(stderr, "child exit\n");
+	}
 	return 0;
 }
 
