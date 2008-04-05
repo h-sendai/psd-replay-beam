@@ -53,10 +53,10 @@ int str_echo(int sockfd, char *filename)
 		}
 
 		requested_length = 
-			( request_buf[4] << 24 ) +
-			( request_buf[5] << 16 ) +
-			( request_buf[6] <<  8 ) +
-			( request_buf[7]       );
+			(request_buf[4] << 24) +
+			(request_buf[5] << 16) +
+			(request_buf[6] <<  8) +
+			(request_buf[7]      );
 		requested_length = requested_length * 4;
 
 		if (dflag) {
@@ -163,7 +163,7 @@ main(int argc, char **argv)
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port        = htons(port);
 
-	if ( bind(listenfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+	if (bind(listenfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
 		err(1, "bind");
 	}
 
