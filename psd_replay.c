@@ -11,91 +11,96 @@
 #include <unistd.h>
 
 #define SERV_PORT 23456
-#define ONE_EVENT 8
 #define LENGTH_REQUEST 8
 #define REQUEST_HEADER 0xa3
 #define LISTENQ   10
 
+static int dflag = 0;
+
 int str_echo(int sockfd, char *filename)
 {
-	unsigned char request_buf[LENGTH_REQUEST];
-	char buf[2 * 1024 * 1024];
-	int requested_length;
-	int i, m, n;
-	int filefd;
-	int length_return;
-	int file_eof = 0;
-	struct iovec iov[2];
+	unsigned char	request_buf[LENGTH_REQUEST];
+	char			buf[2 * 1024 * 1024];
+	int				requested_length;
+	int				m, n;
+	int				filefd;
+	int				length_return;
+	int				file_eof = 0;
+	struct iovec	iov[2];
 
 	if ( (filefd = open(filename, O_RDONLY)) < 0) {
 		err(1, "open");
 	}
 
 	while ( (m = recv(sockfd, request_buf, sizeof(request_buf), MSG_WAITALL)) > 0) {
-		fprintf(stderr, "while exit\n");
 		if (request_buf[0] != REQUEST_HEADER) {
 			warn("invalid request header");
 			return -1;
 		}
-		fprintf(
-			stderr,
-			"request_buf: %x %x %x %x %x %x %x %x\n",
-			request_buf[0],
-			request_buf[1],
-			request_buf[2],
-			request_buf[3],
-			request_buf[4],
-			request_buf[5],
-			request_buf[6],
-			request_buf[7]
-		);
-		fprintf(stderr, "length calculate\n");
+		if (dflag) {
+			fprintf(
+				stderr,
+				"request_buf: %x %x %x %x %x %x %x %x\n",
+				request_buf[0],
+				request_buf[1],
+				request_buf[2],
+				request_buf[3],
+				request_buf[4],
+				request_buf[5],
+				request_buf[6],
+				request_buf[7]
+			);
+		}
+
 		requested_length = 
 			( request_buf[4] << 24 ) +
 			( request_buf[5] << 16 ) +
 			( request_buf[6] <<  8 ) +
 			( request_buf[7]       );
 		requested_length = requested_length * 4;
-		fprintf(stderr, "length: %d\n", requested_length);
+
+		if (dflag) {
+			fprintf(stderr, "length: %d\n", requested_length);
+		}
+
 		if (requested_length > 2 * 1024 * 1024) {
 			err(1, "length too large");
 		}
+
 		if (file_eof != 1) {
 			n = read(filefd, buf, requested_length);
 			if (n < 0) {
 				err(1, "read");
 			}
 			if (n == 0) {
-				file_eof = 1;
+				file_eof = 1; /* for next request.  reduce read() overhead */
 			}
 			length_return = n;
-			//for (i = 0; i < requested_length; i = i + 8) {
-			//	if (buf[i] != 0x5a) {
-			//		length_return --;
-			//	}
-			//}
-			length_return = htonl(length_return/2);
-			iov[0].iov_base = &length_return;
-			iov[0].iov_len  = sizeof(length_return);
-			iov[1].iov_base = buf;
-			iov[1].iov_len  = n;
-
-			if (writev(sockfd, &iov[0], 2) != n + sizeof(length_return)) {
-				err(1, "length + data write");
-			}
+			/*
+			 * for (i = 0; i < requested_length; i = i + 8) {
+			 *	if (buf[i] != 0x5a) {
+			 *		length_return --;
+			 *	}
+			 * }
+			 */
 		}
 		else {
-			/* XXX: same codes appear twice */
 			length_return = 0;
-			if (write(sockfd, &length_return, sizeof(length_return)) != sizeof(length_return)) {
-				err(1, "length return write (with length 0)");
-			}
+			n = 0;
+		}
+
+		length_return = htonl(length_return/2);
+		iov[0].iov_base = &length_return;
+		iov[0].iov_len  = sizeof(length_return);
+		iov[1].iov_base = buf;
+		iov[1].iov_len  = n;
+		if (writev(sockfd, &iov[0], 2) != n + sizeof(length_return)) {
+			err(1, "length + data write");
 		}
 	}
 	if (m < 0) { 
 		err(1, "recv length request");
 	}
-	fprintf(stderr, "return to main\n");
 	return 0;
 }
 
@@ -118,8 +123,11 @@ main(int argc, char **argv)
 	int					filefd;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "p:")) != -1) {
+	while( (ch = getopt(argc, argv, "dp:")) != -1) {
 		switch(ch) {
+			case 'd':
+				dflag = 1;
+				break;
 			case 'p':
 				port = atoi(optarg);
 				break;
