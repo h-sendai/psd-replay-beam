@@ -113,14 +113,14 @@ void usage(void)
 int
 main(int argc, char **argv)
 {
-	int					listenfd, connfd;
-	socklen_t			clilen;
-	struct sockaddr_in	cliaddr, servaddr;
-	int					on = 1;
 	char               *filename;
 	int					ch;
-	int					port;
 	int					filefd;
+	int					listenfd, connfd;
+	int					port;
+	int					on = 1;
+	socklen_t			clilen;
+	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
 	while( (ch = getopt(argc, argv, "dp:")) != -1) {
