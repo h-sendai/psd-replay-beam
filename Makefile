@@ -1,4 +1,4 @@
-CFLAGS = -g -O0 -Wall
+CFLAGS = -g -O0 -Wall -D_FILE_OFFSET_BITS=64
 PROG = psd_replay
 
 SRCS += psd_replay.c
