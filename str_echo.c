@@ -10,6 +10,7 @@
 
 #define LENGTH_REQUEST	8
 #define REQUEST_HEADER	0xa3
+#define BUF_SIZE        2 * 1024 * 1024
 
 extern int dflag;
 extern int sflag;
@@ -18,7 +19,7 @@ extern int usleep_time;
 int str_echo(int sockfd, char *filename)
 {
 	unsigned char	request_buf[LENGTH_REQUEST];
-	char			buf[2 * 1024 * 1024];
+	char			buf[BUF_SIZE];
 	int				requested_length;
 	int				m, n;
 	int				filefd;
@@ -61,8 +62,8 @@ int str_echo(int sockfd, char *filename)
 			fprintf(stderr, "length: %d\n", requested_length);
 		}
 
-		if (requested_length > 2 * 1024 * 1024) {
-			err(1, "length too large");
+		if (requested_length > BUF_SIZE) {
+			err(1, "requested length too large");
 		}
 
 		if (file_eof != 1) {
