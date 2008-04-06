@@ -100,7 +100,7 @@ int str_echo(int sockfd, char *filename)
 		}
 	}
 	if (m < 0) { 
-		err(1, "recv length request");
+		err(1, "(client exit?)");
 	}
 	if (dflag) { /* m == 0 */
 		fprintf(stderr, "child exit\n");
