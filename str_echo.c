@@ -16,6 +16,19 @@ extern int dflag;
 extern int sflag;
 extern int usleep_time;
 
+int print_array_in_hex(char *buf, int len)
+{
+	int i;
+	for (i = 0; i < len; i ++) {
+		fprintf(stderr, "%x", buf[i]);
+		if (i != len - 1) {
+			fprintf(stderr, " ");
+		}
+	}
+	fprintf(stderr, "\n");
+	return 0;
+}
+
 int str_echo(int sockfd, char *filename)
 {
 	unsigned char	request_buf[LENGTH_REQUEST];
@@ -23,7 +36,7 @@ int str_echo(int sockfd, char *filename)
 	int				requested_length;
 	int				m, n;
 	int				filefd;
-	int				length_return;
+	int				return_length;
 	int				file_eof = 0;
 	struct iovec	iov[2];
 
@@ -37,18 +50,7 @@ int str_echo(int sockfd, char *filename)
 			return -1;
 		}
 		if (dflag) {
-			fprintf(
-				stderr,
-				"request_buf: %x %x %x %x %x %x %x %x\n",
-				request_buf[0],
-				request_buf[1],
-				request_buf[2],
-				request_buf[3],
-				request_buf[4],
-				request_buf[5],
-				request_buf[6],
-				request_buf[7]
-			);
+			print_array_in_hex(request_buf, LENGTH_REQUEST);
 		}
 
 		requested_length = 
@@ -74,29 +76,29 @@ int str_echo(int sockfd, char *filename)
 			if (n == 0) {
 				file_eof = 1; /* for next request.  reduce read() overhead */
 			}
-			length_return = n;
+			return_length = n;
 			/*
 			 * for (i = 0; i < requested_length; i = i + 8) {
 			 *	if (buf[i] != 0x5a) {
-			 *		length_return --;
+			 *		return_length --;
 			 *	}
 			 * }
 			 */
 		}
 		else {
-			length_return = 0;
+			return_length = 0;
 			n = 0;
 		}
 
-		length_return = htonl(length_return/2); /* return length in words */
-		iov[0].iov_base = &length_return;
-		iov[0].iov_len  = sizeof(length_return);
+		return_length = htonl(return_length/2); /* return length in words */
+		iov[0].iov_base = &return_length;
+		iov[0].iov_len  = sizeof(return_length);
 		iov[1].iov_base = buf;
 		iov[1].iov_len  = n;
 		if (sflag) {
 			usleep(usleep_time);
 		}
-		if (writev(sockfd, &iov[0], 2) != n + sizeof(length_return)) {
+		if (writev(sockfd, &iov[0], 2) != n + sizeof(return_length)) {
 			err(1, "length + data write");
 		}
 	}
