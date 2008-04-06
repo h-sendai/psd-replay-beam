@@ -4,7 +4,7 @@ psd_replay - NEUNETエミュレータ
 
 使用方法
 
-./psd_replay [-d] [-p port] [-s usleep] datafile
+./psd_replay [-d] [-h ip_address] [-p port] [-s usleep] datafile
 
 説明
 
@@ -27,8 +27,14 @@ datafileを読み終わったらlength 0をクライアントに返し続けます。
 
 -d        デバッグ出力を標準エラー出力に出す。
 
+-h ip_address
+          このサーバーがlisten()するIPアドレスを指定する。指定
+          されなかった場合は全てのネットワークインターフェイス
+          でlisten()する。
+
 -p port   ポート番号portでlisten()する。指定しなかった場合の
           デフォルトは23456。
+
 -s usleep データをソケットにwrite()する前にusleepマイクロ秒
           スリープする。転送速度を遅くするためのはなはだ適当
           な方法。
