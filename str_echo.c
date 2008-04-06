@@ -16,7 +16,7 @@ extern int dflag;
 extern int sflag;
 extern int usleep_time;
 
-int print_array_in_hex(char *buf, int len)
+int print_array_in_hex(unsigned char *buf, int len)
 {
 	int i;
 	for (i = 0; i < len; i ++) {
@@ -29,15 +29,46 @@ int print_array_in_hex(char *buf, int len)
 	return 0;
 }
 
+int prepare_return_data(int filefd, char *buf, int len)
+{
+	static int file_eof = 0;
+	int n;
+	if (len > BUF_SIZE) {
+		err(1, "length too large");
+	}
+	if (! file_eof) {
+		n = read(filefd, buf, len);
+		if (n < 0) {
+			err(1, "data file read error");
+		}
+		if (n == 0) {
+			file_eof = 0;
+		}
+	}
+	else {
+		n = 0;
+	}
+	return n;
+
+	/* XXX: event data and t0 data.  Must exclude t0 data from data length? */
+	/*
+	 * for (i = 0; i < requested_length; i = i + 8) {
+	 *	if (buf[i] != 0x5a) {
+	 *		return_length --;
+	 *	}
+	 * }
+	 */
+}
+
 int str_echo(int sockfd, char *filename)
 {
 	unsigned char	request_buf[LENGTH_REQUEST];
-	char			buf[BUF_SIZE];
+	unsigned char	buf[BUF_SIZE];
 	int				requested_length;
-	int				m, n;
+	int				m;
 	int				filefd;
 	int				return_length;
-	int				file_eof = 0;
+	int				return_length_in_word;
 	struct iovec	iov[2];
 
 	if ( (filefd = open(filename, O_RDONLY)) < 0) {
@@ -68,37 +99,17 @@ int str_echo(int sockfd, char *filename)
 			err(1, "requested length too large");
 		}
 
-		if (file_eof != 1) {
-			n = read(filefd, buf, requested_length);
-			if (n < 0) {
-				err(1, "read");
-			}
-			if (n == 0) {
-				file_eof = 1; /* for next request.  reduce read() overhead */
-			}
-			return_length = n;
-			/*
-			 * for (i = 0; i < requested_length; i = i + 8) {
-			 *	if (buf[i] != 0x5a) {
-			 *		return_length --;
-			 *	}
-			 * }
-			 */
-		}
-		else {
-			return_length = 0;
-			n = 0;
-		}
+		return_length = prepare_return_data(filefd, buf, requested_length);
+		return_length_in_word = htonl(return_length/2); /* in words */
 
-		return_length = htonl(return_length/2); /* return length in words */
-		iov[0].iov_base = &return_length;
-		iov[0].iov_len  = sizeof(return_length);
+		iov[0].iov_base = &return_length_in_word;
+		iov[0].iov_len  = sizeof(return_length_in_word);
 		iov[1].iov_base = buf;
-		iov[1].iov_len  = n;
+		iov[1].iov_len  = return_length;
 		if (sflag) {
 			usleep(usleep_time);
 		}
-		if (writev(sockfd, &iov[0], 2) != n + sizeof(return_length)) {
+		if (writev(sockfd, iov, 2) != sizeof(return_length_in_word) + return_length) {
 			err(1, "length + data write");
 		}
 	}
