@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -36,27 +37,33 @@ void sig_chld(int signo)
 
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-d] [-p port] [-s usleep] file\n");
+	fprintf(stderr, "psd_replay [-d] [-h ip_address] [-p port] [-s usleep] file\n");
 	return;
 }
 
 int main(int argc, char *argv[])
 {
 	char               *filename;
+	char			   *ip_address;
 	int					ch;
 	int					filefd;
 	int					listenfd, connfd;
 	int					port;
 	int					on = 1;
+	int					hflag = 0;
 	pid_t				childpid;
 	socklen_t			clilen;
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "dp:s:")) != -1) {
+	while( (ch = getopt(argc, argv, "dh:p:s:")) != -1) {
 		switch(ch) {
 			case 'd':
 				dflag = 1;
+				break;
+			case 'h':
+				hflag = 1;
+				ip_address = optarg;
 				break;
 			case 'p':
 				port = atoi(optarg);
@@ -84,6 +91,11 @@ int main(int argc, char *argv[])
 		err(1, "cannot read file: %s", filename);
 	}
 	close(filefd);
+	if (hflag) {
+		if (inet_addr(ip_address) == INADDR_NONE) {
+			errx(1, "invalid IP address");
+		}
+	}
 
 	if ( (listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		err(1, "socket");
@@ -94,8 +106,13 @@ int main(int argc, char *argv[])
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family      = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port        = htons(port);
+	if (hflag) {
+		servaddr.sin_addr.s_addr = inet_addr(ip_address);
+	}
+	else {
+		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	}
 
 	if (bind(listenfd, (SA *) &servaddr, sizeof(servaddr)) < 0) {
 		err(1, "bind");
