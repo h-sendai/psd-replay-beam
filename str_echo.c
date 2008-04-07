@@ -29,7 +29,7 @@ int print_array_in_hex(unsigned char *buf, int len)
 	return 0;
 }
 
-int prepare_return_data(int filefd, char *buf, int len)
+int prepare_return_data(int filefd, char *buf, unsigned int len)
 {
 	static int file_eof = 0;
 	int n;
@@ -64,11 +64,11 @@ int str_echo(int sockfd, char *filename)
 {
 	unsigned char	request_buf[LENGTH_REQUEST];
 	unsigned char	buf[BUF_SIZE];
-	int				requested_length;
+	unsigned int	requested_length;
 	int				m;
 	int				filefd;
-	int				return_length;
-	int				return_length_in_word;
+	unsigned int	return_length;
+	unsigned int	return_length_in_word;
 	struct iovec	iov[2];
 
 	if ( (filefd = open(filename, O_RDONLY)) < 0) {
@@ -89,10 +89,10 @@ int str_echo(int sockfd, char *filename)
 			(request_buf[5] << 16) +
 			(request_buf[6] <<  8) +
 			(request_buf[7]      );
-		requested_length = requested_length * 4;
+		requested_length = requested_length * 2;
 
 		if (dflag) {
-			fprintf(stderr, "length: %d\n", requested_length);
+			fprintf(stderr, "length: %u\n", requested_length);
 		}
 
 		if (requested_length > BUF_SIZE) {
@@ -102,6 +102,9 @@ int str_echo(int sockfd, char *filename)
 		return_length = prepare_return_data(filefd, buf, requested_length);
 		return_length_in_word = htonl(return_length/2); /* in words */
 
+		if (dflag) {
+			fprintf(stderr, "return_length_in_word: %u\n", return_length/2);
+		}
 		iov[0].iov_base = &return_length_in_word;
 		iov[0].iov_len  = sizeof(return_length_in_word);
 		iov[1].iov_base = buf;
