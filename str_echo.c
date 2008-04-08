@@ -34,7 +34,7 @@ int prepare_return_data(int filefd, char *buf, unsigned int len)
 	static int file_eof = 0;
 	int n;
 	if (len > BUF_SIZE) {
-		err(1, "length too large");
+		errx(1, "length too large: %d", len);
 	}
 	if (! file_eof) {
 		n = read(filefd, buf, len);
@@ -96,7 +96,7 @@ int str_echo(int sockfd, char *filename)
 		}
 
 		if (requested_length > BUF_SIZE) {
-			err(1, "requested length too large");
+			errx(1, "requested length too large: %d", requested_length);
 		}
 
 		return_length = prepare_return_data(filefd, buf, requested_length);
