@@ -20,6 +20,9 @@ datafileはどこかで実際に取得したデータファイルを利用するのが
 NEUNETはport 23を使用しますが、一般のUnixではport 23を使用
 するにはroot権限が必要になるので、port 23456でlistenするように
 しました。-p portでlistenするポートを変更することが可能です。
+例えば -p 23 を付けて起動するとNEUNETモジュールのようにport 23
+でlisten()しますが、通常のUnixではport 23を使用するにはroot権限
+が必要です。
 
 datafileを読み終わったらlength 0をクライアントに返し続けます。
 
