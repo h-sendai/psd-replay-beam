@@ -74,7 +74,7 @@ read()させてその戻り値0をlengthとしてクライアントに送るほうが
 
 ソースの出どころ
 
-ネットワーク部分についてはStevensらの教科書Unix Netowork Programming
+ネットワーク部分についてはStevensらの教科書Unix Network Programming
 第3版に載っていたものをほぼそのまま使いました。
 
 作者
