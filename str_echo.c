@@ -13,6 +13,7 @@
 #define BUF_SIZE        2 * 1024 * 1024
 
 extern int dflag;
+extern int Fflag;
 extern int sflag;
 extern int usleep_time;
 
@@ -42,7 +43,13 @@ int prepare_return_data(int filefd, char *buf, unsigned int len)
 			err(1, "data file read error");
 		}
 		if (n == 0) {
-			file_eof = 0;
+			/* XXX -F flag: Forever mode */
+			if (Fflag) {
+				lseek(filefd, 0, SEEK_SET);
+			}
+			else {
+				file_eof = 0;
+			}
 		}
 	}
 	else {
