@@ -4,7 +4,7 @@ psd_replay - NEUNETエミュレータ
 
 使用方法
 
-./psd_replay [-d] [-h ip_address] [-p port] [-s usleep] datafile
+./psd_replay [-d] [-F] [-h ip_address] [-p port] [-s usleep] datafile
 
 説明
 
@@ -24,11 +24,16 @@ NEUNETはport 23を使用しますが、一般のUnixではport 23を使用
 $Bでlisten()しますが、通常のUnixではport 23を使用するにはroot権限
 が必要です。
 
-datafileを読み終わったらlength 0をクライアントに返し続けます。
+-Fオプションを指定しなかった場合はdatafileを読み終わったらlength 0
+をクライアントに返し続けます。
 
 オプション
 
 -d        デバッグ出力を標準エラー出力に出す。
+
+-F        foreverモード。datafileを読み終わったらもう一度読み直す。
+          このオプションを指定しなかった場合はdatafileを読み終わ
+          ったらlength 0を返し続ける。
 
 -h ip_address
           このサーバーがlisten()するIPアドレスを指定する。指定
@@ -117,6 +122,9 @@ o sicatを動かした計算機はPentium III 650MHz (シングルコア)
 千代浩司
 
 変更履歴
+
+* 2008-04-12
+    - -Fオプション(foreverモード)追加。
 
 * 2008-04-07
     - 大バグfix(クライアントから送られてくるリクエストイベントデータサイズの
