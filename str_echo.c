@@ -46,6 +46,10 @@ int prepare_return_data(int filefd, char *buf, unsigned int len)
 			/* XXX -F flag: Forever mode */
 			if (Fflag) {
 				lseek(filefd, 0, SEEK_SET);
+				n = read(filefd, buf, len);
+				if (n < 0) {
+					err(1, "data file read error");
+				}
 			}
 			else {
 				file_eof = 0;
