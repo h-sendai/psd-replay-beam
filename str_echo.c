@@ -15,6 +15,7 @@
 extern int dflag;
 extern int Fflag;
 extern int sflag;
+extern int vflag;
 extern int usleep_time;
 
 int print_array_in_hex(unsigned char *buf, int len)
@@ -53,6 +54,9 @@ int prepare_return_data(int filefd, char *buf, unsigned int len)
 			}
 			else {
 				file_eof = 0;
+				if (vflag) {
+					fprintf(stderr, "NO MORE DATA and I DO NOT RE-READ IT!\n");
+				}
 			}
 		}
 	}

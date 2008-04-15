@@ -21,6 +21,7 @@
 int dflag       = 0;
 int sflag       = 0;
 int Fflag		= 0;
+int vflag		= 0;
 int usleep_time = 0;
 
 extern int str_echo(int, char *);
@@ -38,7 +39,7 @@ void sig_chld(int signo)
 
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-d] [-F] [-h ip_address] [-p port] [-s usleep] file\n");
+	fprintf(stderr, "psd_replay [-d] [-F] [-h ip_address] [-p port] [-s usleep] [-v] file\n");
 	return;
 }
 
@@ -57,7 +58,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "dFh:p:s:")) != -1) {
+	while( (ch = getopt(argc, argv, "dFh:p:s:v")) != -1) {
 		switch(ch) {
 			case 'd':
 				dflag = 1;
@@ -75,6 +76,9 @@ int main(int argc, char *argv[])
 			case 's':
 				sflag = 1;
 				usleep_time = atoi(optarg);
+				break;
+			case 'v':
+				vflag = 1;
 				break;
 			case '?':
 			default:
