@@ -8,16 +8,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "psd_replay.h"
+
 #define LENGTH_REQUEST	8
 #define REQUEST_HEADER	0xa3
 #define BUF_SIZE        2 * 1024 * 1024
-
-extern int dflag;
-extern int Fflag;
-extern int sflag;
-extern int vflag;
-extern int zflag;
-extern int usleep_time;
 
 int print_array_in_hex(unsigned char *buf, int len)
 {
@@ -117,17 +112,21 @@ int str_echo(int sockfd, char *filename)
 			errx(1, "requested length too large: %d", requested_length);
 		}
 
-		if (! zflag) {
-			return_length = prepare_return_data(filefd, buf, requested_length);
-			return_length_in_word = htonl(return_length/2); /* in words */
-
-			if (dflag) {
-				fprintf(stderr, "return_length_in_word: %u\n", return_length/2);
-			}
-		}
-		else { /* always return 0 data */
+		if (zflag) {
 			return_length = 0;
 			return_length_in_word = 0;
+		}
+		else if (! Pflag || (Pflag && may_send())) {
+			return_length = prepare_return_data(filefd, buf, requested_length);
+			return_length_in_word = htonl(return_length/2); /* in words */
+		}
+		else {
+			return_length = 0;
+			return_length_in_word = 0;
+		}
+			
+		if (dflag) {
+			fprintf(stderr, "return_length_in_word: %u\n", return_length/2);
 		}
 
 		iov[0].iov_base = &return_length_in_word;

@@ -13,6 +13,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include "my_signal.h"
+#include "psd_replay.h"
 
 #define SERV_PORT		23456
 #define LISTENQ			10
@@ -23,9 +24,10 @@ int sflag       = 0;
 int Fflag		= 0;
 int vflag		= 0;
 int zflag		= 0;
-int usleep_time = 0;
+int Pflag		= 0;
 
-extern int str_echo(int, char *);
+int usleep_time = 0;
+int data_send_probability = 0;
 
 void sig_chld(int signo)
 {
@@ -40,7 +42,7 @@ void sig_chld(int signo)
 
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-d] [-F] [-h ip_address] [-p port] [-s usleep] [-v] [-z] [file]\n");
+	fprintf(stderr, "psd_replay [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-v] [-z] [file]\n");
 	return;
 }
 
@@ -59,7 +61,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "dFh:p:s:vz")) != -1) {
+	while( (ch = getopt(argc, argv, "dFh:p:P:s:vz")) != -1) {
 		switch(ch) {
 			case 'd':
 				dflag = 1;
@@ -73,6 +75,10 @@ int main(int argc, char *argv[])
 				break;
 			case 'p':
 				port = atoi(optarg);
+				break;
+			case 'P':
+				Pflag = 1;
+				data_send_probability = atoi(optarg);
 				break;
 			case 's':
 				sflag = 1;
