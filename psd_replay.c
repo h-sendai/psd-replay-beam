@@ -22,6 +22,7 @@ int dflag       = 0;
 int sflag       = 0;
 int Fflag		= 0;
 int vflag		= 0;
+int zflag		= 0;
 int usleep_time = 0;
 
 extern int str_echo(int, char *);
@@ -39,7 +40,7 @@ void sig_chld(int signo)
 
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-d] [-F] [-h ip_address] [-p port] [-s usleep] [-v] file\n");
+	fprintf(stderr, "psd_replay [-d] [-F] [-h ip_address] [-p port] [-s usleep] [-v] [-z] [file]\n");
 	return;
 }
 
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "dFh:p:s:v")) != -1) {
+	while( (ch = getopt(argc, argv, "dFh:p:s:vz")) != -1) {
 		switch(ch) {
 			case 'd':
 				dflag = 1;
@@ -80,6 +81,9 @@ int main(int argc, char *argv[])
 			case 'v':
 				vflag = 1;
 				break;
+			case 'z':
+				zflag = 1;
+				break;
 			case '?':
 			default:
 				break;
@@ -89,16 +93,18 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1) {
+	if (!zflag && argc != 1) {
 		usage();
 		exit(1);
 	}
 
-	filename = argv[0];
-	if ( (filefd = open(filename, O_RDONLY)) < 0) {
-		err(1, "cannot read file: %s", filename);
+	if (! zflag) {
+		filename = argv[0];
+		if ( (filefd = open(filename, O_RDONLY)) < 0) {
+			err(1, "cannot read file: %s", filename);
+		}
+		close(filefd);
 	}
-	close(filefd);
 	if (hflag) {
 		if (inet_addr(ip_address) == INADDR_NONE) {
 			errx(1, "invalid IP address");

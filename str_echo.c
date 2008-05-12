@@ -16,6 +16,7 @@ extern int dflag;
 extern int Fflag;
 extern int sflag;
 extern int vflag;
+extern int zflag;
 extern int usleep_time;
 
 int print_array_in_hex(unsigned char *buf, int len)
@@ -86,8 +87,10 @@ int str_echo(int sockfd, char *filename)
 	unsigned int	return_length_in_word;
 	struct iovec	iov[2];
 
-	if ( (filefd = open(filename, O_RDONLY)) < 0) {
-		err(1, "open");
+	if (! zflag) {
+		if ( (filefd = open(filename, O_RDONLY)) < 0) {
+			err(1, "open");
+		}
 	}
 
 	while ( (m = recv(sockfd, request_buf, sizeof(request_buf), MSG_WAITALL)) > 0) {
@@ -114,12 +117,19 @@ int str_echo(int sockfd, char *filename)
 			errx(1, "requested length too large: %d", requested_length);
 		}
 
-		return_length = prepare_return_data(filefd, buf, requested_length);
-		return_length_in_word = htonl(return_length/2); /* in words */
+		if (! zflag) {
+			return_length = prepare_return_data(filefd, buf, requested_length);
+			return_length_in_word = htonl(return_length/2); /* in words */
 
-		if (dflag) {
-			fprintf(stderr, "return_length_in_word: %u\n", return_length/2);
+			if (dflag) {
+				fprintf(stderr, "return_length_in_word: %u\n", return_length/2);
+			}
 		}
+		else { /* always return 0 data */
+			return_length = 0;
+			return_length_in_word = 0;
+		}
+
 		iov[0].iov_base = &return_length_in_word;
 		iov[0].iov_len  = sizeof(return_length_in_word);
 		iov[1].iov_base = buf;
