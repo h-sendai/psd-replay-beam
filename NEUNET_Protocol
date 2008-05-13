@@ -1,0 +1,58 @@
+NEUNET Protocol Note
+
+イベントデータ長は 8 バイト
+
+Data Request
+
+8 バイト
+
++------+-----+-----+-----+-----+-----+-----+-----+
+| 0xa3 |     |     |     | L0  | L1  | L2  | L3  |
++------+-----+-----+-----+-----+-----+-----+-----+
+
+例: 100イベント欲しい場合は 400 と送る。
+    200イベント欲しい場合は 800 と送る。
+
+バイトオーダーはネットワークバイトオーダー。
+
+sample code:
+int prepare_len_request_array(int event_num)
+{
+    int word_num = event_num * 4;
+    len_request[0] = 0xa3;
+    len_request[1] = 0;
+    len_request[2] = 0;
+    len_request[3] = 0;
+    len_request[4] = ((word_num & 0xff000000) >> 24) & 0xff;
+    len_request[5] = ((word_num & 0xff0000)   >> 16) & 0xff;
+    len_request[6] = ((word_num & 0xff00)     >>  8) & 0xff;
+    len_request[7] =   word_num & 0xff;
+    
+    return 0;
+}
+
+Return Data
+
+データの前にこれから送られて来るデータの長さが4バイトで送られてくる。
+単位はword(1word == 2バイト)。ネットワークバイトオーダー。
+
++------+-----------+-----------+-----------+
+| LEN  |   DATA    |   DATA    |   DATA    |
++------+-----------+-----------+-----------+
+
+と来る場合、LEN は 12 となっている。
+
+sample code:
+
+int n, len;
+unsignd char buf[4];
+n = recv(sockfd, buf, sizeof(buf), MSG_WAITALL);
+len = 
+    (buf[0] << 24) +
+    (buf[1] << 16) +
+    (buf[2] <<  8) +
+    (buf[3]      ) ;
+
+リクエストされた長さ分以下が返る。
+必ずしもリクエストされた分が返るわけではないが、リクエストされた
+より多く返って来ることはない。
