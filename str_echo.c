@@ -27,6 +27,13 @@ int print_array_in_hex(unsigned char *buf, int len)
 	return 0;
 }
 
+/* 
+ * NEUNET Protocol note
+ * Return length of the data contains event data, t0 data, etc.
+ * For example, if we have 100 event data and 2 t0 data, we will
+ * return a value (100 + 2) * 4 = 408 as the data length.
+ */
+
 int prepare_return_data(int filefd, char *buf, unsigned int len)
 {
 	static int file_eof = 0;
@@ -60,15 +67,6 @@ int prepare_return_data(int filefd, char *buf, unsigned int len)
 		n = 0;
 	}
 	return n;
-
-	/* XXX: event data and t0 data.  Must exclude t0 data from data length? */
-	/*
-	 * for (i = 0; i < requested_length; i = i + 8) {
-	 *	if (buf[i] != 0x5a) {
-	 *		return_length --;
-	 *	}
-	 * }
-	 */
 }
 
 int str_echo(int sockfd, char *filename)
