@@ -7,6 +7,7 @@
 #define SA              struct sockaddr
 */
 
+extern int cflag;
 extern int dflag;
 extern int sflag;
 extern int Fflag;
@@ -18,5 +19,6 @@ extern int data_send_probability;
 
 extern int str_echo(int, char *);
 extern int may_send(void);
+extern int return_data_counter;
 
 #endif

@@ -19,13 +19,15 @@
 #define LISTENQ			10
 #define SA				struct sockaddr
 
-int dflag       = 0;
-int sflag       = 0;
-int Fflag		= 0;
-int vflag		= 0;
-int zflag		= 0;
-int Pflag		= 0;
+int cflag = 0;
+int dflag = 0;
+int sflag = 0;
+int Fflag = 0;
+int vflag = 0;
+int zflag = 0;
+int Pflag = 0;
 
+int return_data_counter = 0;
 int usleep_time = 0;
 int data_send_probability = 0;
 
@@ -42,7 +44,7 @@ void sig_chld(int signo)
 
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-v] [-z] [file]\n");
+	fprintf(stderr, "psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-v] [-z] [file]\n");
 	return;
 }
 
@@ -61,8 +63,12 @@ int main(int argc, char *argv[])
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "dFh:p:P:s:vz")) != -1) {
+	while( (ch = getopt(argc, argv, "c:dFh:p:P:s:vz")) != -1) {
 		switch(ch) {
+			case 'c':
+				cflag = 1;
+				return_data_counter = atoi(optarg);
+				break;
 			case 'd':
 				dflag = 1;
 				break;

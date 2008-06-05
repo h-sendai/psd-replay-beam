@@ -73,12 +73,13 @@ int str_echo(int sockfd, char *filename)
 {
 	unsigned char	request_buf[LENGTH_REQUEST];
 	unsigned char	buf[BUF_SIZE];
-	unsigned int	requested_length;
+	unsigned int	requested_length = 0;
 	int				m;
 	int				filefd;
-	unsigned int	return_length;
-	unsigned int	return_length_in_word;
+	unsigned int	return_length = 0;
+	unsigned int	return_length_in_word = 0;
 	struct iovec	iov[2];
+	static int		request_counter = 0;
 
 	if (! zflag) {
 		if ( (filefd = open(filename, O_RDONLY)) < 0) {
@@ -114,7 +115,19 @@ int str_echo(int sockfd, char *filename)
 			return_length = 0;
 			return_length_in_word = 0;
 		}
-		else if (! Pflag || (Pflag && may_send())) {
+		else if (cflag) {
+			request_counter ++;
+			if ((request_counter % return_data_counter) == 0) {
+				return_length =
+					prepare_return_data(filefd, buf, requested_length);
+				return_length_in_word = htonl(return_length/2); /* in words */
+			}
+			else {
+				return_length = 0;
+				return_length_in_word = 0;
+			}
+		}
+		else if (! Pflag || (Pflag && may_send())) { 
 			return_length = prepare_return_data(filefd, buf, requested_length);
 			return_length_in_word = htonl(return_length/2); /* in words */
 		}
