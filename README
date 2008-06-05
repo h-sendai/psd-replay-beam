@@ -4,7 +4,7 @@ psd_replay - NEUNETエミュレータ
 
 使用方法
 
-./psd_replay [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-z] [datafile
+./psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-z] [datafile
 
 説明
 
@@ -32,6 +32,9 @@ NEUNETはport 23を使用しますが、一般のUnixではport 23を使用
 $Bをクライアントに返し続けます。
 
 オプション
+
+-c count  リクエストに対しcount回ごとにデータを返します。データを
+          返さないときはlength 0を返します。
 
 -d        デバッグ出力を標準エラー出力に出す。
 
@@ -134,6 +137,9 @@ o sicatを動かした計算機はPentium III 650MHz (シングルコア)
 千代浩司
 
 変更履歴
+
+* 2008-06-04
+    - -cオプション(データを返す回を指定)を追加。
 
 * 2008-05-12
     - -zオプション(常にイベント長として0を返す)を追加。
