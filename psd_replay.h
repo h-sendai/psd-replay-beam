@@ -10,6 +10,7 @@
 extern int cflag;
 extern int dflag;
 extern int sflag;
+extern int Sflag;
 extern int Fflag;
 extern int vflag;
 extern int zflag;
@@ -20,5 +21,6 @@ extern int data_send_probability;
 extern int str_echo(int, char *);
 extern int may_send(void);
 extern int return_data_counter;
+extern int return_data_size;
 
 #endif

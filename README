@@ -4,7 +4,7 @@ psd_replay - NEUNETエミュレータ
 
 使用方法
 
-./psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-z] [datafile
+./psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-S data_byte_size] [-z] [datafile
 
 説明
 
@@ -60,6 +60,10 @@ NEUNETはport 23を使用しますが、一般のUnixではport 23を使用
           $Bな方法。マイクロ秒で指定できるが現在のLinuxの実装
           では1usを指定しても1ms程度はsleepしてしまうことに
           注意。
+
+-S data_byte_size
+          返すデータ長の最大値をdata_byte_sizeバイトにする。
+
 -z        イベントデータ長として常に0を返す。このオプションを
           指定した場合、datafileは指定する必要がない(指定しても
           無視される)。

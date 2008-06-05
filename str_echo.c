@@ -38,6 +38,11 @@ int prepare_return_data(int filefd, char *buf, unsigned int len)
 {
 	static int file_eof = 0;
 	int n;
+	if (Sflag) {
+		if (len > return_data_size) { 
+			len = return_data_size;
+		}
+	}
 	if (len > BUF_SIZE) {
 		errx(1, "length too large: %d", len);
 	}

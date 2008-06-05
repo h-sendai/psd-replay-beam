@@ -22,6 +22,7 @@
 int cflag = 0;
 int dflag = 0;
 int sflag = 0;
+int Sflag = 0;
 int Fflag = 0;
 int vflag = 0;
 int zflag = 0;
@@ -30,6 +31,7 @@ int Pflag = 0;
 int return_data_counter = 0;
 int usleep_time = 0;
 int data_send_probability = 0;
+int return_data_size = 0;
 
 void sig_chld(int signo)
 {
@@ -44,7 +46,7 @@ void sig_chld(int signo)
 
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-v] [-z] [file]\n");
+	fprintf(stderr, "psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-S data_byte_size] [-v] [-z] [file]\n");
 	return;
 }
 
@@ -63,7 +65,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "c:dFh:p:P:s:vz")) != -1) {
+	while( (ch = getopt(argc, argv, "c:dFh:p:P:s:S:vz")) != -1) {
 		switch(ch) {
 			case 'c':
 				cflag = 1;
@@ -89,6 +91,10 @@ int main(int argc, char *argv[])
 			case 's':
 				sflag = 1;
 				usleep_time = atoi(optarg);
+				break;
+			case 'S':
+				Sflag = 1;
+				return_data_size = atoi(optarg);
 				break;
 			case 'v':
 				vflag = 1;
