@@ -1,7 +1,7 @@
 #!/bin/sh
 
 data_dir=/home/sendai/src/psd_replay_beam
-Hz=30
+Hz=1
 port=5555
 byte_data_size_per_shot=128000 # in bytes
 forever=

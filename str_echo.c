@@ -19,6 +19,11 @@ int word2byte(int word)
 	return word * 2;
 }
 
+int byte2word(int byte)
+{
+	return byte / 2;
+}
+
 int print_array_in_hex(unsigned char *buf, int len)
 {
 	int i;
@@ -135,15 +140,17 @@ READ_AGAIN:
 			int try_read_len;
 			if (remain_data_byte_size > requested_byte_length) {
 				try_read_len = requested_byte_length;
-				remain_data_byte_size -= try_read_len;
+				//remain_data_byte_size -= try_read_len;
 			}
 			else {
 				try_read_len = remain_data_byte_size;
-				remain_data_byte_size = 0;
+				//remain_data_byte_size = 0;
 			}
 			return_length = prepare_return_data(filefd, buf,
 								try_read_len);
-			return_length_in_word = htonl(return_length/2); /* in words */
+			remain_data_byte_size -= return_length;
+			return_length_in_word = htonl(byte2word(return_length));
+			/* in words */
 		}
 		else {
 			return_length = 0;
