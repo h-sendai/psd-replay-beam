@@ -1,5 +1,5 @@
 syntax: glob
-psd_replay
+psd_replay_beam
 .depend
 *.o
 *.d

@@ -7,20 +7,21 @@
 #define SA              struct sockaddr
 */
 
-extern int cflag;
+#define MAX_HZ 30
+
+#include <signal.h>
+
 extern int dflag;
+extern int Hflag;
 extern int sflag;
-extern int Sflag;
 extern int Fflag;
 extern int vflag;
-extern int zflag;
-extern int Pflag;
+
+extern int Hz;
 extern int usleep_time;
-extern int data_send_probability;
+extern volatile sig_atomic_t event_flag;
+extern int data_byte_size_per_shot;
 
 extern int str_echo(int, char *);
-extern int may_send(void);
-extern int return_data_counter;
-extern int return_data_size;
 
 #endif

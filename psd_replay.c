@@ -21,17 +21,22 @@
 
 int cflag = 0;
 int dflag = 0;
+int Hflag = 0;
 int sflag = 0;
 int Sflag = 0;
 int Fflag = 0;
 int vflag = 0;
 int zflag = 0;
 int Pflag = 0;
+int Hz = 0;
 
 int return_data_counter = 0;
 int usleep_time = 0;
 int data_send_probability = 0;
 int return_data_size = 0;
+
+volatile sig_atomic_t event_flag = 0;
+int data_byte_size_per_shot = 0;
 
 void sig_chld(int signo)
 {
@@ -44,9 +49,26 @@ void sig_chld(int signo)
 	return;
 }
 
+void sig_alarm(int signo)
+{
+	event_flag = 1;
+	return;
+}
+
 void usage(void)
 {
-	fprintf(stderr, "psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-S data_byte_size] [-v] [-z] [file]\n");
+	char *usage_message =
+"usage: psd_replay_beam [-d] [-H hz] [-F] [-h ip_address] [-n data_size] [-p port] [-s usleep] [-v] data_file\n"
+"Options:\n"
+"    -d            debug\n"
+"    -H hz         beam Hz (1 - 25)\n"
+"    -F            forever mode.  Read data file again when reach EOF.\n"
+"    -h ip_address listen IP address\n"
+"    -n data_size  data bytes size per one beam shot\n"
+"    -s usleep     sleep usleep usec just before sending data\n"
+"    -v            verbose\n";
+
+	fprintf(stderr, usage_message);
 	return;
 }
 
@@ -65,12 +87,8 @@ int main(int argc, char *argv[])
 	struct sockaddr_in	cliaddr, servaddr;
 
 	port = SERV_PORT;
-	while( (ch = getopt(argc, argv, "c:dFh:p:P:s:S:vz")) != -1) {
+	while( (ch = getopt(argc, argv, "dFh:H:n:p:s:v")) != -1) {
 		switch(ch) {
-			case 'c':
-				cflag = 1;
-				return_data_counter = atoi(optarg);
-				break;
 			case 'd':
 				dflag = 1;
 				break;
@@ -81,26 +99,26 @@ int main(int argc, char *argv[])
 				hflag = 1;
 				ip_address = optarg;
 				break;
+			case 'H':
+				Hflag = 1;
+				Hz = atoi(optarg);
+				if (Hz <= 0 || Hz > MAX_HZ) {
+					usage();
+					exit(1);
+				}
+				break;
+			case 'n':
+				data_byte_size_per_shot = atoi(optarg);
+				break;
 			case 'p':
 				port = atoi(optarg);
-				break;
-			case 'P':
-				Pflag = 1;
-				data_send_probability = atoi(optarg);
 				break;
 			case 's':
 				sflag = 1;
 				usleep_time = atoi(optarg);
 				break;
-			case 'S':
-				Sflag = 1;
-				return_data_size = atoi(optarg);
-				break;
 			case 'v':
 				vflag = 1;
-				break;
-			case 'z':
-				zflag = 1;
 				break;
 			case '?':
 			default:
@@ -111,18 +129,17 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (!zflag && argc != 1) {
+	if (argc != 1) {
 		usage();
 		exit(1);
 	}
 
-	if (! zflag) {
-		filename = argv[0];
-		if ( (filefd = open(filename, O_RDONLY)) < 0) {
-			err(1, "cannot read file: %s", filename);
-		}
-		close(filefd);
+	filename = argv[0];
+	if ( (filefd = open(filename, O_RDONLY)) < 0) {
+		err(1, "cannot read file: %s", filename);
 	}
+	close(filefd);
+
 	if (hflag) {
 		if (inet_addr(ip_address) == INADDR_NONE) {
 			errx(1, "invalid IP address");
@@ -155,6 +172,7 @@ int main(int argc, char *argv[])
 	}
 	
 	my_signal(SIGCHLD, sig_chld);
+	my_signal(SIGALRM, sig_alarm);
 
 	for ( ; ; ) {
 		clilen = sizeof(cliaddr);

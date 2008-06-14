@@ -14,6 +14,11 @@
 #define REQUEST_HEADER	0xa3
 #define BUF_SIZE        2 * 1024 * 1024
 
+int word2byte(int word)
+{
+	return word * 2;
+}
+
 int print_array_in_hex(unsigned char *buf, int len)
 {
 	int i;
@@ -38,11 +43,7 @@ int prepare_return_data(int filefd, char *buf, unsigned int len)
 {
 	static int file_eof = 0;
 	int n;
-	if (Sflag) {
-		if (len > return_data_size) { 
-			len = return_data_size;
-		}
-	}
+
 	if (len > BUF_SIZE) {
 		errx(1, "length too large: %d", len);
 	}
@@ -78,71 +79,75 @@ int str_echo(int sockfd, char *filename)
 {
 	unsigned char	request_buf[LENGTH_REQUEST];
 	unsigned char	buf[BUF_SIZE];
-	unsigned int	requested_length = 0;
+	unsigned int	requested_word_length = 0;
+	unsigned int	requested_byte_length = 0;
 	int				m;
 	int				filefd;
 	unsigned int	return_length = 0;
 	unsigned int	return_length_in_word = 0;
 	struct iovec	iov[2];
-	static int		request_counter = 0;
+	double			ualarm_interval;
+	static int		remain_data_byte_size = 0;
 
-	if (! zflag) {
-		if ( (filefd = open(filename, O_RDONLY)) < 0) {
-			err(1, "open");
-		}
+    if ( (filefd = open(filename, O_RDONLY)) < 0) {
+		err(1, "open");
 	}
 
+	if (Hflag) {
+		ualarm_interval = 1000000 / Hz;
+	}
+	else {
+		ualarm_interval = 1000000 / 25;
+	}
+
+	ualarm(ualarm_interval, ualarm_interval);
+
+READ_AGAIN:
 	while ( (m = recv(sockfd, request_buf, sizeof(request_buf), MSG_WAITALL)) > 0) {
 		if (request_buf[0] != REQUEST_HEADER) {
-			warn("invalid request header");
-			return -1;
+			errx(1, "invalid request header");
 		}
 		if (dflag) {
 			print_array_in_hex(request_buf, LENGTH_REQUEST);
 		}
 
-		requested_length = 
+		requested_word_length = 
 			(request_buf[4] << 24) +
 			(request_buf[5] << 16) +
 			(request_buf[6] <<  8) +
 			(request_buf[7]      );
-		requested_length = requested_length * 2;
+		requested_byte_length = word2byte(requested_word_length);
 
 		if (dflag) {
-			fprintf(stderr, "length: %u\n", requested_length);
+			fprintf(stderr, "length: %u\n", requested_byte_length);
 		}
 
-		if (requested_length > BUF_SIZE) {
-			errx(1, "requested length too large: %d", requested_length);
+		if (requested_byte_length > BUF_SIZE) {
+			errx(1, "requested length too large: %d", requested_byte_length);
+		}
+		
+		if (event_flag == 1) {
+			event_flag = 0;
+			remain_data_byte_size = data_byte_size_per_shot;
 		}
 
-		if (zflag) {
-			return_length = 0;
-			return_length_in_word = 0;
-		}
-		else if (cflag) {
-			request_counter ++;
-			if ((request_counter % return_data_counter) == 0) {
-				return_length =
-					prepare_return_data(filefd, buf, requested_length);
-				return_length_in_word = htonl(return_length/2); /* in words */
+		if (remain_data_byte_size > 0) {
+			int try_read_len;
+			if (remain_data_byte_size > requested_byte_length) {
+				try_read_len = requested_byte_length;
+				remain_data_byte_size -= try_read_len;
 			}
 			else {
-				return_length = 0;
-				return_length_in_word = 0;
+				try_read_len = remain_data_byte_size;
+				remain_data_byte_size = 0;
 			}
-		}
-		else if (! Pflag || (Pflag && may_send())) { 
-			return_length = prepare_return_data(filefd, buf, requested_length);
+			return_length = prepare_return_data(filefd, buf,
+								try_read_len);
 			return_length_in_word = htonl(return_length/2); /* in words */
 		}
 		else {
 			return_length = 0;
 			return_length_in_word = 0;
-		}
-			
-		if (dflag) {
-			fprintf(stderr, "return_length_in_word: %u\n", return_length/2);
 		}
 
 		iov[0].iov_base = &return_length_in_word;
@@ -152,12 +157,19 @@ int str_echo(int sockfd, char *filename)
 		if (sflag) {
 			usleep(usleep_time);
 		}
-		if (writev(sockfd, iov, 2) != sizeof(return_length_in_word) + return_length) {
-			err(1, "length + data write");
+		//if (writev(sockfd, iov, 2) != sizeof(return_length_in_word) + return_length) {
+		if (writev(sockfd, iov, 2) == -1) {
+			int pid = getpid();
+			err(1, "pid: %d: writev", pid);
 		}
 	}
 	if (m < 0) { 
-		err(1, "(client exit?)");
+		if (errno == EINTR) {
+			goto READ_AGAIN;
+		}
+		else {
+			err(1, "(client exit?)");
+		}
 	}
 	if (dflag) { /* m == 0 */
 		fprintf(stderr, "child exit\n");
