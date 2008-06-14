@@ -1,20 +1,33 @@
 名前
 
-psd_replay - NEUNETエミュレータ
+psd_replay_beam - NEUNETエミュレータ
 
 使用方法
 
-./psd_replay [-c count] [-d] [-F] [-h ip_address] [-p port] [-P probability] [-s usleep] [-S data_byte_size] [-z] [datafile
+usage: psd_replay_beam [-d] [-H hz] [-F] [-h ip_address] [-n data_size] [-p port] [-s usleep] [-v] data_file
+
+Options:
+    -d            debug
+    -H hz         beam Hz (1 - 25)
+    -F            forever mode.  Read data file again when reach EOF.
+    -h ip_address listen IP address
+    -n data_size  data bytes size per one beam shot
+    -s usleep     sleep usleep usec just before sending data
+    -v            verbose
 
 説明
 
-NEUNETのプロトコルでデータを送信するエミュレータです。
-データは、自前で作るわけではなく、datafileを読んでそれをその
-まま送り出します。
+NEUNETのプロトコルでデータを送信するエミュレータです。データ
+は、自前で作るわけではなく、datafileを読んでそれをそのまま送
+り出します。
 
-返すデータ長はリクエストされた長さだけ返しますが、detafileの
-最後の部分を読んだときにリクエストされた長さだけdetafileに
-残りデータがなかった場合は読み取れた分だけ返します。
+返すデータ長はビーム運転のときをまねるようにしました。ビーム
+1ショットで何イベントのデータが生成するかを -n オプションで
+指定します。ビーム周期を-HでHz単位で指定します。-Hで指定でき
+る範囲は1から30Hzまでで、整数のみ指定できます。
+
+detafileの最後の部分を読んだときにリクエストされた長さだけ
+detafileに残りデータがなかった場合は読み取れた分だけ返します。
 
 datafileはどこかで実際に取得したデータファイルを利用するのが
 簡単です。T0データはこのエミュレータでは発生させることができ
@@ -33,9 +46,6 @@ NEUNETはport 23を使用しますが、一般のUnixではport 23を使用
 
 $Bオプション
 
--c count  リクエストに対しcount回ごとにデータを返します。データを
-          返さないときはlength 0を返します。
-
 -d        デバッグ出力を標準エラー出力に出す。
 
 -F        foreverモード。datafileを読み終わったらもう一度読み直す。
@@ -47,26 +57,21 @@ NEUNETはport 23を使用しますが、一般のUnixではport 23を使用
           $Bされなかった場合は全てのネットワークインターフェイス
           でlisten()する。
 
+-H Hz     ビーム運転周期をHzで指定する。整数のみ指定可。1から30
+          Hzまで。その他の値が指定された場合はエラーとなる。
+          
+-n イベントバイトサイズ
+          ビーム1ショットあたり発生するイベントサイズをバイトで
+          指定する。
+
 -p port   ポート番号portでlisten()する。指定しなかった場合の
           デフォルトは23456。
-
--p probability
-          長さ0でないデータを返す確率。確率1が100。10と指定すると
-          10回に1回程度の割合で長さ0でないデータを返す。0でないデータ長
-          を返すときにはリクエストされた長さ分だけ返そうとする。
 
 -s usleep データをソケットにwrite()する前にusleepマイクロ秒
           スリープする。転送速度を遅くするためのはなはだ適当
           な方法。マイクロ秒で指定できるが現在のLinuxの実装
           では1usを指定しても1ms程度はsleepしてしまうことに
           注意。
-
--S data_byte_size
-          返すデータ長の最大値をdata_byte_sizeバイトにする。
-
--z        イベントデータ長として常に0を返す。このオプションを
-          指定した場合、datafileは指定する必要がない(指定しても
-          無視される)。
 
 診断
 
@@ -101,46 +106,85 @@ read()させてその戻り値0をlengthとしてクライアントに送るほうが
 ネットワーク部分についてはStevensらの教科書Unix Network Programming
 第3版に載っていたものをほぼそのまま使いました。
 
--s usleepオプション vs 転送速度
+sicatで読み取らせたときの例
 
-o KEKLAN 100Mbpsのネットワーク
-o 33970528バイトのデータファイル
-o 読み取りソフトウェアはsicat
-o psd_replayを動かした計算機はPentium 4 2.4GHz (シングルコア)
-o sicatを動かした計算機はPentium III 650MHz (シングルコア)
-の環境で-sオプションで指定する秒数をいろいろ変えて転送スピード
-を計測してみた。クライアントはいつも4096イベント(32kバイト)の
-リクエストを出し、サーバーは最後のリプライを除き4096イベント
-(32kバイト)データを返す。
+psd_replay_beam -h 130.87.234.118 -H 25 -n 128000 -p 5555 /home/sendai/src/psd_replay_beam/test.dat
 
--s usleep 転送にかかった時間(秒) 転送レート(MB/s)
-無し              4.13             7.84
-1000              6.75             4.80
-2000              7.78             4.16
-3000              8.82             3.67
-4000              9.86             3.29
-5000             10.89             2.97
-10000            16.08             1.93
-20000            26.45             1.22
-50000            58.52             0.55
+として25Hz、ビーム1ショットで128000バイトのデータが生成する
+としてこのエミュレータを走らせて、sicatで読み取ったときの例
+を以下に示します。最初のカラムは接続してからの経過時間。
+次のカラムはその直前のカラムとの時間差を示します。
+(中略)のところは0イベントが返ってきています。概ね40msec間隔
+(だいたい42msecくらい)で0以外のデータが返ってきているのがわ
+かります。
 
-同じことをネットワークだけGbEに変えて計測
--s usleep 転送にかかった時間(秒) 転送レート(MB/s)
-無し              0.77            42.07
-1000              3.12            10.38  
-2000              4.15             7.80
-3000              5.19             6.24
-4000              6.23             5.20
-5000              7.26             4.46
-10000            12.44             2.60
-20000            22.82             1.42
-50000            53.92             0.60
+0.000000 0.000000 request #    1     0 events (     0 bytes )
+0.002787 0.002787 request #    2     0 events (     0 bytes )
+(中略)
+0.037903 0.001251 request #   30     0 events (     0 bytes )
+0.039151 0.001248 request #   31     0 events (     0 bytes )
+0.048668 0.009517 request #   32  4096 events ( 32768 bytes )
+0.054843 0.006175 request #   33  4096 events ( 32768 bytes )
+0.059145 0.004302 request #   34  4096 events ( 32768 bytes )
+0.064098 0.004953 request #   35  3712 events ( 29696 bytes )
+0.065384 0.001286 request #   36     0 events (     0 bytes )
+0.067703 0.002319 request #   37     0 events (     0 bytes )
+(中略)
+0.080401 0.001251 request #   42     0 events (     0 bytes )
+0.081649 0.001248 request #   43     0 events (     0 bytes )
+0.086874 0.005225 request #   44  4096 events ( 32768 bytes )
+0.090108 0.003234 request #   45  4096 events ( 32768 bytes )
+0.094396 0.004288 request #   46  4096 events ( 32768 bytes )
+0.098219 0.003823 request #   47  3712 events ( 29696 bytes )
+0.099503 0.001284 request #   48     0 events (     0 bytes )
+0.101818 0.002315 request #   49     0 events (     0 bytes )
+(中略)
+0.120374 0.001247 request #   63     0 events (     0 bytes )
+0.121630 0.001256 request #   64     0 events (     0 bytes )
+0.125669 0.004039 request #   65  4096 events ( 32768 bytes )
+0.129967 0.004298 request #   66  4096 events ( 32768 bytes )
+0.134779 0.004812 request #   67  4096 events ( 32768 bytes )
+0.138492 0.003713 request #   68  3712 events ( 29696 bytes )
+0.140852 0.002360 request #   69     0 events (     0 bytes )
+0.142164 0.001312 request #   70     0 events (     0 bytes )
+(中略)
+0.161966 0.001250 request #   85     0 events (     0 bytes )
+0.163215 0.001249 request #   86     0 events (     0 bytes )
+0.168416 0.005201 request #   87  4096 events ( 32768 bytes )
+0.171665 0.003249 request #   88  4096 events ( 32768 bytes )
+0.176607 0.004942 request #   89  4096 events ( 32768 bytes )
+0.180330 0.003723 request #   90  3712 events ( 29696 bytes )
+0.182677 0.002347 request #   91     0 events (     0 bytes )
+0.183924 0.001247 request #   92     0 events (     0 bytes )
+(中略)
+0.201223 0.001250 request #  105     0 events (     0 bytes )
+0.202469 0.001246 request #  106     0 events (     0 bytes )
+0.207685 0.005216 request #  107  4096 events ( 32768 bytes )
+0.210913 0.003228 request #  108  4096 events ( 32768 bytes )
+0.215836 0.004923 request #  109  4096 events ( 32768 bytes )
+0.219551 0.003715 request #  110  3712 events ( 29696 bytes )
+0.221915 0.002364 request #  111     0 events (     0 bytes )
+0.223163 0.001248 request #  112     0 events (     0 bytes )
+(中略)
+0.243302 0.001251 request #  127     0 events (     0 bytes )
+0.244548 0.001246 request #  128     0 events (     0 bytes )
+0.249768 0.005220 request #  129  4096 events ( 32768 bytes )
+0.252998 0.003230 request #  130  4096 events ( 32768 bytes )
+0.257924 0.004926 request #  131  4096 events ( 32768 bytes )
+0.261646 0.003722 request #  132  3712 events ( 29696 bytes )
+0.263991 0.002345 request #  133     0 events (     0 bytes )
+0.265238 0.001247 request #  134     0 events (     0 bytes )
+(中略)
 
 作者
 
 千代浩司
 
 変更履歴
+
+* 2008-06-14
+    - ビーム運転時をまねるように変更したブランチpsd_replay_beam
+      を作成。
 
 * 2008-06-04
     - -cオプション(データを返す回を指定)を追加。
