@@ -140,11 +140,9 @@ READ_AGAIN:
 			int try_read_len;
 			if (remain_data_byte_size > requested_byte_length) {
 				try_read_len = requested_byte_length;
-				//remain_data_byte_size -= try_read_len;
 			}
 			else {
 				try_read_len = remain_data_byte_size;
-				//remain_data_byte_size = 0;
 			}
 			return_length = prepare_return_data(filefd, buf,
 								try_read_len);
