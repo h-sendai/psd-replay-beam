@@ -72,6 +72,15 @@ void usage(void)
 	return;
 }
 
+void print_priv_port_notice(int port)
+{
+	char *message;
+	message = "You need root privilege to use port %d.\n"
+			  "Use -p option to change listening port.\n";
+	fprintf(stderr, message, port);
+	return;
+}
+  
 int main(int argc, char *argv[])
 {
 	char               *filename;
@@ -164,7 +173,14 @@ int main(int argc, char *argv[])
 	}
 
 	if (bind(listenfd, (SA *) &servaddr, sizeof(servaddr)) < 0) {
-		err(1, "bind");
+		int uid = getuid();
+		if ( (errno == EACCES) && (port < 1024) && (uid != 0)) {
+			print_priv_port_notice(port);
+			exit(1);
+		}
+		else {
+			err(1, "bind");
+		}
 	}
 
 	if (listen(listenfd, LISTENQ) < 0) {
