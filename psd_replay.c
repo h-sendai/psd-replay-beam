@@ -61,7 +61,7 @@ void usage(void)
 "usage: psd_replay_beam [-d] [-H hz] [-F] [-h ip_address] [-n data_size] [-p port] [-s usleep] [-v] data_file\n"
 "Options:\n"
 "    -d            debug\n"
-"    -H hz         beam Hz (1 - 25)\n"
+"    -H hz         beam Hz (1 - 30)\n"
 "    -F            forever mode.  Read data file again when reach EOF.\n"
 "    -h ip_address listen IP address\n"
 "    -n data_size  data bytes size per one beam shot\n"

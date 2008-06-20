@@ -8,7 +8,7 @@ usage: psd_replay_beam [-d] [-H hz] [-F] [-h ip_address] [-n data_size] [-p port
 
 Options:
     -d            debug
-    -H hz         beam Hz (1 - 25)
+    -H hz         beam Hz (1 - 30)
     -F            forever mode.  Read data file again when reach EOF.
     -h ip_address listen IP address
     -n data_size  data bytes size per one beam shot
