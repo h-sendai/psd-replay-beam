@@ -44,7 +44,7 @@ int print_array_in_hex(unsigned char *buf, int len)
  * return a value (100 + 2) * 4 = 408 as the data length.
  */
 
-int prepare_return_data(int filefd, char *buf, unsigned int len)
+int prepare_return_data(int filefd, unsigned char *buf, unsigned int len)
 {
 	static int file_eof = 0;
 	int n;
