@@ -35,8 +35,8 @@ int usleep_time = 0;
 int data_send_probability = 0;
 int return_data_size = 0;
 
-volatile sig_atomic_t event_flag = 0;
-int data_byte_size_per_shot = 0;
+volatile sig_atomic_t event_flag = 1;
+int data_byte_size_per_shot = 100000; /* default event data byte size */
 
 void sig_chld(int signo)
 {
