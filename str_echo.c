@@ -172,8 +172,11 @@ READ_AGAIN:
 		if (errno == EINTR) {
 			goto READ_AGAIN;
 		}
+		else if (errno == ECONNRESET) {
+			err(1, "receive reset from client");
+		}
 		else {
-			err(1, "(client exit?)");
+			err(1, "length request read error");
 		}
 	}
 	if (dflag) { /* m == 0 */
