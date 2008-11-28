@@ -16,6 +16,7 @@
 #include "psd_replay.h"
 
 #define SERV_PORT		23456
+#define NEUNET_PORT		23
 #define LISTENQ			10
 #define SA				struct sockaddr
 
@@ -81,6 +82,27 @@ void print_priv_port_notice(int port)
 	return;
 }
   
+void print_caution_on_port(int port)
+{
+	char *message;
+	message = "\n"
+"NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE\n"
+"\n"
+"           DANGER, Will Robinson! DANGAR! DANGER!\n"
+"\n"
+"You are trying to listen on port %d.\n"
+"This is not a default port of the neunet module.\n"
+"The Gatherer compoment may not be able to connect this port.\n"
+"Use -p option to specify the port number.\n"
+"If you use port 23 (NEUNET default port), you have to become\n"
+"root user to listen on port 23.\n"
+"\n"
+"NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE\n"
+"\n";
+	fprintf(stderr, message, port);
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 	char               *filename;
@@ -148,6 +170,10 @@ int main(int argc, char *argv[])
 		err(1, "cannot read file: %s", filename);
 	}
 	close(filefd);
+	
+	if (port != NEUNET_PORT) {
+		print_caution_on_port(port);
+	}
 
 	if (hflag) {
 		if (inet_addr(ip_address) == INADDR_NONE) {
