@@ -90,7 +90,7 @@ void print_caution_on_port(int port)
 "\n"
 "           DANGER, Will Robinson! DANGAR! DANGER!\n"
 "\n"
-"You are trying to listen on port %d.\n"
+"You are listening on port %d.\n"
 "This is not a default port of the NEUNET module.\n"
 "The Gatherer component may not be able to connect this port.\n"
 "Use -p option to specify the listening port number.\n"
